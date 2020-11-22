@@ -12,6 +12,7 @@ import 'package:hex/hex.dart';
 import 'package:image/image.dart';
 import 'package:gbk_codec/gbk_codec.dart';
 import 'package:esc_pos_utils/esc_pos_utils.dart';
+import '../esc_pos_utils.dart';
 import 'enums.dart';
 import 'commands.dart';
 
@@ -501,12 +502,20 @@ class Generator {
               text: '', width: cols[i].width, styles: cols[i].styles));
         }
         // end rows splitting
-        bytes += _text(
-          encodedToPrint,
-          styles: cols[i].styles,
-          colInd: colInd,
-          colWidth: cols[i].width,
-        );
+        if (cols[i].image != null) {
+          bytes += image(
+            cols[i].image,
+            align: cols[i].styles.align,
+            colWidth: cols[i].width,
+          );
+        } else {
+          bytes += _text(
+            encodedToPrint,
+            styles: cols[i].styles,
+            colInd: colInd,
+            colWidth: cols[i].width,
+          );
+        }
       } else {
         // CASE 1: containsChinese = true
         // Split text into multiple lines if it too long
@@ -567,8 +576,25 @@ class Generator {
   /// Print an image using (ESC *) command
   ///
   /// [image] is an instanse of class from [Image library](https://pub.dev/packages/image)
-  List<int> image(Image imgSrc, {PosAlign align = PosAlign.center}) {
+  List<int> image(Image imgSrc,
+      {PosAlign align = PosAlign.center, int colInd = 0, int colWidth = 12}) {
     List<int> bytes = [];
+    if (colInd != null) {
+      if (colWidth != 12) {
+        double fromPos = _colIndToPosition(colInd);
+        final double toPos =
+            _colIndToPosition(colInd + colWidth) - spaceBetweenRows;
+        // final double textLen = textBytes.length * charWidth;
+
+        if (align == PosAlign.right) {
+          // fromPos = toPos - textLen;
+        } else if (align == PosAlign.center) {
+          //       fromPos = fromPos + (toPos - fromPos) / 2 - textLen / 2;
+        }
+        //     if (fromPos < 0) {
+        //       fromPos = 0;
+      }
+    }
     // Image alignment
     bytes += setStyles(PosStyles().copyWith(align: align));
 
